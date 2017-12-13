@@ -38,5 +38,67 @@ namespace XPCalc {
             Grid.SetColumn(this.partySizeBox, 5);
             simpleGrid.Children.Add(this.partySizeBox);
         }
+
+        public void calculateSimpleXp(object sender, RoutedEventArgs e) {
+            int el, level, count;
+            if (!int.TryParse(this.elBox.Text, out el)) {
+                MessageBox.Show("Unable to parse encounter level '" + this.elBox.Text + "'", "Error");
+                return;
+            }
+            if (el < 1) {
+                MessageBox.Show("Encounter level must be at least 1", "Error");
+                return;
+            }
+            if (!int.TryParse(this.partyLevelBox.Text, out level)) {
+                MessageBox.Show("Unable to parse party level '" + this.partyLevelBox.Text + "'", "Error");
+                return;
+            }
+            if (level < 1) {
+                MessageBox.Show("Party level must be at least 1", "Error");
+                return;
+            }
+            if (!int.TryParse(this.partySizeBox.Text, out count)) {
+                MessageBox.Show("Unable to parse party size'" + this.partySizeBox.Text + "'", "Error");
+                return;
+            }
+            if (count < 1) {
+                MessageBox.Show("Party size must be at least 1", "Error");
+                return;
+            }
+            xpBox.Text = "" + this.calculateXp(el, level, count);
+        }
+
+        private int calculateXp(int cr, int level, int count, String opponent = "Encounter", String character = "party") {
+            double xp = 0;
+            if (level <= 3) {
+                level = 3;
+            }
+            if ((cr == 1) && (level < 6)) {
+                level = 6;
+            }
+            int diff = cr - level;
+            if (diff < -7) {
+                MessageBox.Show(opponent + " is more than 7 levels below " + character + "; no XP will be awarded", "Warning");
+                return 0;
+            }
+            if (diff > 7) {
+                MessageBox.Show(opponent + " is more than 7 levels above " + character + "; consider alternate XP award", "Warning");
+            }
+            for (xp = 300; diff < -1; diff += 2) {
+                xp /= 2;
+            }
+            for (; diff > 1; diff -= 2) {
+                xp *= 2;
+            }
+            if ((diff < 0) || ((diff > 0) && (level == 4))) {
+                xp *= (diff > 0 ? 4 : 2);
+                xp /= 3;
+            }
+            else if (diff > 0) {
+                xp *= 1.5;
+            }
+            xp = Math.Round(xp * level, MidpointRounding.AwayFromZero); // total encounter xp
+            return (int)Math.Round(xp / count, MidpointRounding.AwayFromZero);
+        }
     }
 }
