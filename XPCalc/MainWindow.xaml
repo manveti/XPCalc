@@ -5,8 +5,148 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:XPCalc"
         mc:Ignorable="d"
-        Title="MainWindow" Height="350" Width="525">
+        Title="XP Calculator" Width="640" Height="400">
     <Grid>
-        
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="1*"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1*"/>
+        </Grid.ColumnDefinitions>
+        <GroupBox Grid.Row="0" Grid.Column="0" Header="Simple">
+            <Grid Name="simpleGrid">
+                <Grid.RowDefinitions>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="1*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="1*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="1*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="1*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Label Grid.Row="0" Grid.Column="0" Content="EL:"/>
+                <!--SpinBox elBox created in code-->
+                <Label Grid.Row="0" Grid.Column="2" Content="Party Level:"/>
+                <!--SpinBox partyLevelBox created in code-->
+                <Label Grid.Row="0" Grid.Column="4" Content="Party Size:"/>
+                <!--SpinBox partySizeBox created in code-->
+                <Label Grid.Row="0" Grid.Column="6" Content="XP:"/>
+                <TextBox Grid.Row="0" Grid.Column="7" Name="xpBox" IsReadOnly="True"/>
+                <Button Grid.Row="0" Grid.Column="8" Content="Calculate"/>
+            </Grid>
+        </GroupBox>
+        <GroupBox Grid.Row="1" Grid.Column="0" Header="Advanced">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="4*"/>
+                    <ColumnDefinition Width="5*"/>
+                    <ColumnDefinition Width="3*"/>
+                </Grid.ColumnDefinitions>
+                <GroupBox Grid.Row="0" Grid.Column="0" Header="Encounter">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="1*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <ListView Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" Name="opponentList">
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn Header="Opponent"/>
+                                    <GridViewColumn Header="CR"/>
+                                    <GridViewColumn Header="Count"/>
+                                </GridView>
+                            </ListView.View>
+                        </ListView>
+                        <Button Grid.Row="1" Grid.Column="1" Content="Add..."/>
+                        <Button Grid.Row="1" Grid.Column="2" Content="Edit..."/>
+                        <Button Grid.Row="1" Grid.Column="3" Content="Remove"/>
+                    </Grid>
+                </GroupBox>
+                <GroupBox Grid.Row="0" Grid.Column="1" Header="Party">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="1*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Button Grid.Row="0" Grid.Column="1" Content="Load..."/>
+                        <Button Grid.Row="0" Grid.Column="2" Content="Save"/>
+                        <Button Grid.Row="0" Grid.Column="3" Content="Save As..."/>
+                        <ListView Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4" Name="partyList">
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn>
+                                        <GridViewColumnHeader>
+                                            Present
+                                            <GridViewColumnHeader.ContextMenu>
+                                                <ContextMenu>
+                                                    <MenuItem Header="Select All"/>
+                                                    <MenuItem Header="Clear All"/>
+                                                </ContextMenu>
+                                            </GridViewColumnHeader.ContextMenu>
+                                        </GridViewColumnHeader>
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <CheckBox/>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Header="Character"/>
+                                    <GridViewColumn Header="Level"/>
+                                    <GridViewColumn Header="XP"/>
+                                </GridView>
+                            </ListView.View>
+                        </ListView>
+                        <Button Grid.Row="2" Grid.Column="1" Content="Add..."/>
+                        <Button Grid.Row="2" Grid.Column="2" Content="Edit..."/>
+                        <Button Grid.Row="2" Grid.Column="3" Content="Remove"/>
+                    </Grid>
+                </GroupBox>
+                <GroupBox Grid.Row="0" Grid.Column="2" Header="XP">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="1*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <ListView Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Name="xpList">
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn Header="Character"/>
+                                    <GridViewColumn Header="XP"/>
+                                </GridView>
+                            </ListView.View>
+                        </ListView>
+                        <Button Grid.Row="1" Grid.Column="1" Content="Clear"/>
+                        <Button Grid.Row="1" Grid.Column="2" Content="Apply XP"/>
+                    </Grid>
+                </GroupBox>
+            </Grid>
+        </GroupBox>
     </Grid>
 </Window>

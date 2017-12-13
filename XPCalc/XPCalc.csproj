@@ -93,5 +93,7 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <Import Project="..\..\GUIx\GUIx\GUIx.projitems" Label="Shared" />
+  <Import Project="..\..\Storage\Storage\Storage.projitems" Label="Shared" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
