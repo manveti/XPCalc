@@ -24,19 +24,28 @@ namespace XPCalc {
             InitializeComponent();
             this.elBox = new TextBox();
             this.elBox.Text = "1";
+            this.elBox.KeyDown += this.simpleXpKeyDown;
             Grid.SetRow(this.elBox, 0);
             Grid.SetColumn(this.elBox, 1);
             simpleGrid.Children.Add(this.elBox);
             this.partyLevelBox = new TextBox();
             this.partyLevelBox.Text = "1";
+            this.partyLevelBox.KeyDown += this.simpleXpKeyDown;
             Grid.SetRow(this.partyLevelBox, 0);
             Grid.SetColumn(this.partyLevelBox, 3);
             simpleGrid.Children.Add(this.partyLevelBox);
             this.partySizeBox = new TextBox();
             this.partySizeBox.Text = "4";
+            this.partySizeBox.KeyDown += this.simpleXpKeyDown;
             Grid.SetRow(this.partySizeBox, 0);
             Grid.SetColumn(this.partySizeBox, 5);
             simpleGrid.Children.Add(this.partySizeBox);
+        }
+
+        public void simpleXpKeyDown(object sender, KeyEventArgs e) {
+            if (e.Key == Key.Return) {
+                this.calculateSimpleXp(sender, e);
+            }
         }
 
         public void calculateSimpleXp(object sender, RoutedEventArgs e) {
