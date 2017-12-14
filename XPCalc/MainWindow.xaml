@@ -38,7 +38,7 @@
                 <!--SpinBox partySizeBox created in code-->
                 <Label Grid.Row="0" Grid.Column="6" Content="XP:"/>
                 <TextBox Grid.Row="0" Grid.Column="7" Name="xpBox" IsReadOnly="True"/>
-                <Button Grid.Row="0" Grid.Column="8" Content="Calculate" Click="calculateSimpleXp"/>
+                <Button Grid.Row="0" Grid.Column="8" Name="simpleNotesBut" Content="Notes" Click="getSimpleNotes" IsEnabled="False"/>
             </Grid>
         </GroupBox>
         <GroupBox Grid.Row="1" Grid.Column="0" Header="Advanced">
