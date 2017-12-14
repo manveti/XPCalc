@@ -26,7 +26,8 @@ namespace XPCalc {
             Success,
             Failure,
             ELTooLow,
-            ELTooHigh
+            ELTooHigh,
+            OverLevel
         }
 
         class OpponentRow {
@@ -115,6 +116,10 @@ namespace XPCalc {
                 err = "Encounter is more than 7 levels above party; consider alternate XP award";
                 severity = "Warning";
                 break;
+            case XpError.OverLevel:
+                err = "XP award is more than two levels' worth; truncated to 1XP below second level-up";
+                severity = "Notice";
+                break;
             }
             MessageBox.Show(err, severity);
         }
@@ -160,6 +165,7 @@ namespace XPCalc {
 /////
 #endif
         private int calculateXp(int cr, int level, int count, out XpError err) {
+            int origLevel = level;
             double xp = 0;
             err = XpError.Success;
             if (level <= 3) {
@@ -190,7 +196,16 @@ namespace XPCalc {
                 xp *= 1.5;
             }
             xp = Math.Round(xp * level, MidpointRounding.AwayFromZero); // total encounter xp
-            return (int)Math.Round(xp / count, MidpointRounding.AwayFromZero);
+            xp = Math.Round(xp / count, MidpointRounding.AwayFromZero);
+            if (xp >= this.overLevelThreshold(origLevel)) {
+                err = XpError.OverLevel;
+                xp = this.overLevelThreshold(origLevel) - 1;
+            }
+            return (int)xp;
+        }
+
+        private int overLevelThreshold(int level) {
+            return (level + level + 1) * 1000;
         }
     }
 }
