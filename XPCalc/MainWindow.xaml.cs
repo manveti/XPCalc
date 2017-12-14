@@ -43,8 +43,8 @@ namespace XPCalc {
 
         public MainWindow() {
             InitializeComponent();
-            this.dataDir = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-            this.dataDir = System.IO.Path.Combine(this.dataDir, "data");
+            this.dataDir = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            this.dataDir = System.IO.Path.Combine(this.dataDir, "XPCalc");
             this.elBox = new SpinBox();
             this.elBox.Value = 1;
             this.elBox.Minimum = 1;
