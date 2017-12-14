@@ -13,29 +13,34 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
+using GUIx;
+
 namespace XPCalc {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
     public partial class MainWindow : Window {
-        private TextBox elBox, partyLevelBox, partySizeBox;
+        private SpinBox elBox, partyLevelBox, partySizeBox;
 
         public MainWindow() {
             InitializeComponent();
-            this.elBox = new TextBox();
-            this.elBox.Text = "1";
+            this.elBox = new SpinBox();
+            this.elBox.Value = 1;
+            this.elBox.Minimum = 1;
             this.elBox.KeyDown += this.simpleXpKeyDown;
             Grid.SetRow(this.elBox, 0);
             Grid.SetColumn(this.elBox, 1);
             simpleGrid.Children.Add(this.elBox);
-            this.partyLevelBox = new TextBox();
-            this.partyLevelBox.Text = "1";
+            this.partyLevelBox = new SpinBox();
+            this.partyLevelBox.Value = 1;
+            this.partyLevelBox.Minimum = 1;
             this.partyLevelBox.KeyDown += this.simpleXpKeyDown;
             Grid.SetRow(this.partyLevelBox, 0);
             Grid.SetColumn(this.partyLevelBox, 3);
             simpleGrid.Children.Add(this.partyLevelBox);
-            this.partySizeBox = new TextBox();
-            this.partySizeBox.Text = "4";
+            this.partySizeBox = new SpinBox();
+            this.partySizeBox.Value = 4;
+            this.partySizeBox.Minimum = 1;
             this.partySizeBox.KeyDown += this.simpleXpKeyDown;
             Grid.SetRow(this.partySizeBox, 0);
             Grid.SetColumn(this.partySizeBox, 5);
