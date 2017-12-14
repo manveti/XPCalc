@@ -36,11 +36,28 @@ namespace XPCalc {
             public int count { get; set; }
         }
 
-        private SpinBox elBox, partyLevelBox, partySizeBox;
+        class CharacterRow {
+            public bool present { get; set; }
+            public String name { get; set; }
+            public int level { get; set; }
+            public int totalXp { get; set; }
+            public int unspentXp { get; set; }
+        }
+
+        class XpRow {
+            public String character { get; set; }
+            public int xp { get; set; }
+            public String notes { get; set; }
+            public XpError err { get; set; }
+            public String errMsg { get; set; }
+        }
+
+        private SpinBox elBox, partyLevelBox, partySizeBox, partyXpBox;
         private XpError simpleErr = XpError.Success;
         private readonly String dataDir;
         private DictionaryStore<string, string> preferences;
         private DictionaryStore<string, int> opponents;
+        private bool partyChanged = false;
 
         public MainWindow() {
             InitializeComponent();
@@ -69,39 +86,33 @@ namespace XPCalc {
             simpleGrid.Children.Add(this.partySizeBox);
             this.calculateSimpleXp(null, null);
             this.opponentList.Items.SortDescriptions.Add(new SortDescription("name", ListSortDirection.Ascending));
+            this.partyList.Items.SortDescriptions.Add(new SortDescription("name", ListSortDirection.Ascending));
             //...
+            this.partyXpBox = new SpinBox();
+            this.partyXpBox.Value = 0;
+            Grid.SetRow(this.partyXpBox, 1);
+            Grid.SetColumn(this.partyXpBox, 1);
+            Grid.SetColumnSpan(this.partyXpBox, 3);
+            xpGrid.Children.Add(this.partyXpBox);
             System.IO.Directory.CreateDirectory(this.dataDir);
             this.preferences = new DictionaryStore<string, string>(System.IO.Path.Combine(this.dataDir, "prefs.cfg"));
             this.opponents = new DictionaryStore<string, int>(System.IO.Path.Combine(this.dataDir, "opponents.db"));
         }
 
         private void calculateSimpleXp(object sender, RoutedEventArgs e) {
-            int el, level, count;
-            if (!int.TryParse(this.elBox.Text, out el)) {
-                MessageBox.Show("Unable to parse encounter level '" + this.elBox.Text + "'", "Error");
-                return;
-            }
-            if (el < 1) {
+            if (this.elBox.Value < 1) {
                 MessageBox.Show("Encounter level must be at least 1", "Error");
                 return;
             }
-            if (!int.TryParse(this.partyLevelBox.Text, out level)) {
-                MessageBox.Show("Unable to parse party level '" + this.partyLevelBox.Text + "'", "Error");
-                return;
-            }
-            if (level < 1) {
+            if (this.partyLevelBox.Value < 1) {
                 MessageBox.Show("Party level must be at least 1", "Error");
                 return;
             }
-            if (!int.TryParse(this.partySizeBox.Text, out count)) {
-                MessageBox.Show("Unable to parse party size'" + this.partySizeBox.Text + "'", "Error");
-                return;
-            }
-            if (count < 1) {
+            if (this.partySizeBox.Value < 1) {
                 MessageBox.Show("Party size must be at least 1", "Error");
                 return;
             }
-            xpBox.Text = "" + this.calculateXp(el, level, count, out this.simpleErr);
+            xpBox.Text = "" + this.calculateXp((int)this.elBox.Value, (int)this.partyLevelBox.Value, (int)this.partySizeBox.Value, out this.simpleErr);
             this.simpleNotesBut.IsEnabled = (this.simpleErr != XpError.Success);
         }
 
@@ -153,17 +164,104 @@ namespace XPCalc {
             this.opponentList.Items.Refresh();
         }
 
-#if false
-/////
-//
-            int totalCount = 0;
-            foreach (OpponentRow r in this.opponentList.Items) {
-                totalCount += r.count;
+        //party load/save/save as (see this.partyChanged)
+
+        private void addCharacter(object sender, RoutedEventArgs e) {
+            CharacterWindow cw = new CharacterWindow();
+            cw.ShowDialog();
+            if (!cw.isValid()) { return; }
+            this.partyChanged = true;
+            this.partyList.Items.Add(new CharacterRow { present = true, name = cw.name, level = cw.level, totalXp = cw.totalXp, unspentXp = cw.unspentXp });
+            this.partyList.Items.Refresh();
+        }
+
+        private void editCharacter(object sender, RoutedEventArgs e) {
+            CharacterRow selected = (CharacterRow)this.partyList.SelectedItem;
+            CharacterWindow cw = new CharacterWindow();
+            cw.setExisting(selected.name, selected.level, selected.unspentXp);
+            cw.ShowDialog();
+            if (!cw.isValid()) { return; }
+            this.partyChanged = true;
+            selected.name = cw.name;
+            selected.level = cw.level;
+            selected.totalXp = cw.totalXp;
+            selected.unspentXp = cw.unspentXp;
+            SortDescription sd = this.partyList.Items.SortDescriptions[0];
+            this.partyList.Items.SortDescriptions.Clear();
+            this.partyList.Items.SortDescriptions.Add(sd);
+        }
+
+        private void removeCharacter(object sender, RoutedEventArgs e) {
+            CharacterRow selected = (CharacterRow)this.partyList.SelectedItem;
+            if (selected == null) { return; }
+            this.partyChanged = true;
+            this.partyList.Items.Remove(selected);
+            this.partyList.Items.Refresh();
+        }
+
+        private void calculateEncounterXp(object sender, RoutedEventArgs e) {
+            this.xpList.Items.Clear();
+            int partySize = 0;
+            foreach (CharacterRow c in this.partyList.Items) {
+                if (c.present) { partySize += 1; }
             }
-            this.Title = "count: " + totalCount;
-//
-/////
-#endif
+            if (partySize <= 0) {
+                MessageBox.Show("Party is empty; add characters to calculate encounter XP", "Error");
+                return;
+            }
+            foreach (CharacterRow c in this.partyList.Items) {
+                if (!c.present) { continue; }
+                XpError err, worstErr = XpError.Success;
+                int xp = 0;
+                foreach (OpponentRow o in this.opponentList.Items) {
+                    if ((o.cr < 1) || (c.level < 1) || (o.count < 1)) {
+                        err = XpError.Failure;
+                        continue;
+                    }
+                    xp += this.calculateXp(o.cr, c.level, partySize, out err) * o.count;
+                    switch (worstErr) {
+                    case XpError.Failure: break;
+                    case XpError.ELTooHigh:
+                        if (err == XpError.Failure) { worstErr = err; }
+                        break;
+                    case XpError.ELTooLow:
+                        if ((err == XpError.Failure) || (err == XpError.ELTooHigh)) { worstErr = err; }
+                        break;
+                    default:
+                        if (err != XpError.Success) { worstErr = err; }
+                        break;
+                    }
+                }
+                if (xp >= this.overLevelThreshold(c.level) - c.unspentXp) {
+                    if (worstErr != XpError.Failure) { worstErr = XpError.OverLevel; }
+                    xp = this.overLevelThreshold(c.level) - c.unspentXp - 1;
+                }
+                String notes="", errMsg = "";
+                switch (worstErr) {
+                case XpError.Failure:
+                    notes = "X";
+                    errMsg = "One or more opponents was invalid; unable to calculate XP";
+                    break;
+                case XpError.ELTooLow:
+                    notes = "-";
+                    errMsg = "At least one opponent was more than 7 levels below " + c.name;
+                    errMsg += "; no XP was awarded for that opponent";
+                    break;
+                case XpError.ELTooHigh:
+                    notes = "+";
+                    errMsg = "At least one opponent was more than 7 levels above " + c.name;
+                    errMsg += "; consider alternate XP award";
+                    break;
+                case XpError.OverLevel:
+                    notes = "*";
+                    errMsg = "XP award for " + c.name + "was more than two levels' worth; truncated to 1XP below second level-up";
+                    break;
+                }
+                this.xpList.Items.Add(new XpRow { character = c.name, xp = xp, notes=notes, err=worstErr, errMsg=errMsg });
+            }
+            this.xpList.Items.Refresh();
+        }
+
         private int calculateXp(int cr, int level, int count, out XpError err) {
             int origLevel = level;
             double xp = 0;

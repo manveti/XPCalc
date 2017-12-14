@@ -58,6 +58,9 @@ namespace XPCalc {
         }
 
         public void doOk(object sender, RoutedEventArgs e) {
+            if (nameBox.Text.Length <= 0) {
+                nameBox.Text = "Opponent";
+            }
             if (saveBox.IsChecked.Value) {
                 if ((!this.opponents.ContainsKey(nameBox.Text)) || (this.opponents[nameBox.Text] != (int)this.crBox.Value)) {
                     this.opponents[nameBox.Text] = (int)this.crBox.Value;
@@ -76,6 +79,9 @@ namespace XPCalc {
             nameBox.Text = name;
             this.crBox.Value = cr;
             this.countBox.Value = count;
+            if (!this.opponents.ContainsKey(name)) {
+                saveBox.IsChecked = false;
+            }
         }
 
         public bool isValid() {
