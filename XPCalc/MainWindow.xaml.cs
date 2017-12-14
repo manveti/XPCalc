@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,6 +15,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 
 using GUIx;
+using Storage;
 
 namespace XPCalc {
     /// <summary>
@@ -27,11 +29,22 @@ namespace XPCalc {
             ELTooHigh
         }
 
+        class OpponentRow {
+            public String name { get; set; }
+            public int cr { get; set; }
+            public int count { get; set; }
+        }
+
         private SpinBox elBox, partyLevelBox, partySizeBox;
         private XpError simpleErr = XpError.Success;
+        private readonly String dataDir;
+        private DictionaryStore<string, string> preferences;
+        private DictionaryStore<string, int> opponents;
 
         public MainWindow() {
             InitializeComponent();
+            this.dataDir = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            this.dataDir = System.IO.Path.Combine(this.dataDir, "data");
             this.elBox = new SpinBox();
             this.elBox.Value = 1;
             this.elBox.Minimum = 1;
@@ -54,9 +67,14 @@ namespace XPCalc {
             Grid.SetColumn(this.partySizeBox, 5);
             simpleGrid.Children.Add(this.partySizeBox);
             this.calculateSimpleXp(null, null);
+            this.opponentList.Items.SortDescriptions.Add(new SortDescription("name", ListSortDirection.Ascending));
+            //...
+            System.IO.Directory.CreateDirectory(this.dataDir);
+            this.preferences = new DictionaryStore<string, string>(System.IO.Path.Combine(this.dataDir, "prefs.cfg"));
+            this.opponents = new DictionaryStore<string, int>(System.IO.Path.Combine(this.dataDir, "opponents.db"));
         }
 
-        public void calculateSimpleXp(object sender, RoutedEventArgs e) {
+        private void calculateSimpleXp(object sender, RoutedEventArgs e) {
             int el, level, count;
             if (!int.TryParse(this.elBox.Text, out el)) {
                 MessageBox.Show("Unable to parse encounter level '" + this.elBox.Text + "'", "Error");
@@ -101,6 +119,46 @@ namespace XPCalc {
             MessageBox.Show(err, severity);
         }
 
+        private void addOpponent(object sender, RoutedEventArgs e) {
+            OpponentWindow ow = new OpponentWindow(this.opponents);
+            ow.ShowDialog();
+            if (!ow.isValid()) { return; }
+            this.opponentList.Items.Add(new OpponentRow { name = ow.name, cr = ow.cr, count = ow.count });
+            this.opponentList.Items.Refresh();
+        }
+
+        private void editOpponent(object sender, RoutedEventArgs e) {
+            OpponentRow selected = (OpponentRow)this.opponentList.SelectedItem;
+            OpponentWindow ow = new OpponentWindow(this.opponents);
+            ow.setExisting(selected.name, selected.cr, selected.count);
+            ow.ShowDialog();
+            if (!ow.isValid()) { return; }
+            selected.name = ow.name;
+            selected.cr = ow.cr;
+            selected.count = ow.count;
+            SortDescription sd = this.opponentList.Items.SortDescriptions[0];
+            this.opponentList.Items.SortDescriptions.Clear();
+            this.opponentList.Items.SortDescriptions.Add(sd);
+        }
+
+        private void removeOpponent(object sender, RoutedEventArgs e) {
+            OpponentRow selected = (OpponentRow)this.opponentList.SelectedItem;
+            if (selected == null) { return; }
+            this.opponentList.Items.Remove(selected);
+            this.opponentList.Items.Refresh();
+        }
+
+#if false
+/////
+//
+            int totalCount = 0;
+            foreach (OpponentRow r in this.opponentList.Items) {
+                totalCount += r.count;
+            }
+            this.Title = "count: " + totalCount;
+//
+/////
+#endif
         private int calculateXp(int cr, int level, int count, out XpError err) {
             double xp = 0;
             err = XpError.Success;
