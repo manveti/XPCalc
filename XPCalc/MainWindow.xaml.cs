@@ -50,6 +50,7 @@ namespace XPCalc {
             public int level { get; set; }
             public int unspentXp { get; set; }
             public int xp { get; set; }
+            public int xpAdjust { get; set; }
             public String notes { get; set; }
             public XpError err { get; set; }
             public String errMsg { get; set; }
@@ -317,7 +318,7 @@ namespace XPCalc {
             cw.ShowDialog();
             if (!cw.isValid()) { return; }
             String name = cw.name;
-            if (this.nameInUse(cw.name)) {
+            if ((cw.name != selected.name) && (this.nameInUse(cw.name))) {
                 name = selected.name;
                 MessageBox.Show("The name '" + cw.name + "' is already in use; name reverted to " + name);
             }
@@ -403,7 +404,17 @@ namespace XPCalc {
                     }
                     break;
                 }
-                this.xpList.Items.Add(new XpRow { character = c.name, level = c.level, unspentXp = c.unspentXp, xp = xp, notes = notes, err = worstErr, errMsg = errMsg });
+                XpRow r = new XpRow {
+                    character = c.name,
+                    level = c.level,
+                    unspentXp = c.unspentXp,
+                    xp = xp,
+                    xpAdjust = 0,
+                    notes = notes,
+                    err = worstErr,
+                    errMsg = errMsg
+                };
+                this.xpList.Items.Add(r);
             }
             this.xpList.Items.Refresh();
         }
@@ -411,14 +422,18 @@ namespace XPCalc {
         private void adjustEncounterXp(object sender, RoutedEventArgs e) {
             foreach (XpRow r in this.xpList.Items) {
                 if ((this.partyXpBox.Value < 0) && (r.err == XpError.OverLevel)) {
-                    r.err = XpError.Failure;
-                    r.notes = "X";
-                    r.errMsg = "XP award for " + r.character + " had been truncated due to over-leveling; negative adjustment not applied";
-                    continue;
+                    if (r.xp + r.unspentXp < r.level * 1000) {
+                        r.err = XpError.Success;
+                        r.notes = "?";
+                        r.errMsg = "XP award for " + r.character + " had been truncated due to over-leveling; other errors may have been overshadowed";
+                    }
                 }
+                int encounterXp = r.xp - r.xpAdjust;
                 r.xp += (int)this.partyXpBox.Value;
+                r.xpAdjust += (int)this.partyXpBox.Value;
                 if (r.xp >= this.overLevelThreshold(r.level)) {
                     r.xp = this.overLevelThreshold(r.level) - 1;
+                    r.xpAdjust = r.xp - encounterXp;
                     if ((r.err != XpError.Failure) && (r.err != XpError.OverLevel)) {
                         r.err = XpError.OverLevel;
                         r.notes = "*";
@@ -447,12 +462,14 @@ namespace XPCalc {
                         level = c.level,
                         unspentXp = c.unspentXp,
                         xp = (int)this.partyXpBox.Value,
+                        xpAdjust = (int)this.partyXpBox.Value,
                         notes = "",
                         err = XpError.Success,
                         errMsg = ""
                     };
                     if (r.xp >= this.overLevelThreshold(r.level)) {
                         r.xp = this.overLevelThreshold(r.level) - 1;
+                        r.xpAdjust = r.xp;
                         r.err = XpError.OverLevel;
                         r.notes = "*";
                         r.errMsg = "XP award for " + r.character + " was more than two levels' worth; truncated to 1XP below second level-up";
@@ -482,7 +499,20 @@ namespace XPCalc {
         }
 
         private void editEncounterXp(object sender, RoutedEventArgs e) {
-            //edit selected row of this.xpList
+            XpRow selected = (XpRow)this.xpList.SelectedItem;
+            if (selected == null) { return; }
+            int encounterXp = selected.xp - selected.xpAdjust;
+            XpWindow xw = new XpWindow(selected.character, encounterXp, selected.xpAdjust);
+            xw.ShowDialog();
+            if (!xw.isValid()) { return; }
+            selected.xp = encounterXp + xw.xpAdjust;
+            selected.xpAdjust = xw.xpAdjust;
+/////
+//
+            //figure out selected.notes, .err, and .errMsg, as well as potential need to truncate xp and xpAdjust
+//
+/////
+            this.xpList.Items.Refresh();
         }
 
         private void encounterXpNotes(object sender, RoutedEventArgs e) {
