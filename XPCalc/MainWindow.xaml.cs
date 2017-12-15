@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -61,6 +62,7 @@ namespace XPCalc {
 
         public MainWindow() {
             InitializeComponent();
+            this.Closing += this.handleClose;
             this.dataDir = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
             this.dataDir = System.IO.Path.Combine(this.dataDir, "XPCalc");
             this.elBox = new SpinBox();
@@ -97,6 +99,17 @@ namespace XPCalc {
             System.IO.Directory.CreateDirectory(this.dataDir);
             this.preferences = new DictionaryStore<string, string>(System.IO.Path.Combine(this.dataDir, "prefs.cfg"));
             this.opponents = new DictionaryStore<string, int>(System.IO.Path.Combine(this.dataDir, "opponents.db"));
+            if (this.preferences.ContainsKey("partyFile")) {
+                this.doPartyLoad();
+            }
+        }
+
+        private void handleClose(object sender, CancelEventArgs e) {
+            if (this.partyChanged) {
+                if (MessageBox.Show("The current party has unsaved changes. Close anyway?", "Close?", MessageBoxButton.YesNo) != MessageBoxResult.Yes) {
+                    e.Cancel = true;
+                }
+            }
         }
 
         private void calculateSimpleXp(object sender, RoutedEventArgs e) {
@@ -164,7 +177,118 @@ namespace XPCalc {
             this.opponentList.Items.Refresh();
         }
 
-        //party load/save/save as (see this.partyChanged)
+        private void loadParty(object sender, RoutedEventArgs e) {
+            if (this.partyChanged) {
+                if (MessageBox.Show("The current party has unsaved changes. Unload it anyway?", "Discard?", MessageBoxButton.YesNo) != MessageBoxResult.Yes) {
+                    return;
+                }
+            }
+            OpenFileDialog ofd = new OpenFileDialog();
+            ofd.DefaultExt = ".xpd";
+            ofd.Filter = "Party Files|*.xpd|All Files|*.*";
+            if (this.preferences.ContainsKey("partyFile")) {
+                ofd.FileName = this.preferences["partyFile"];
+            }
+            if (this.preferences.ContainsKey("partyDir")) {
+                ofd.InitialDirectory = this.preferences["partyDir"];
+            }
+            ofd.ValidateNames = true;
+            if (ofd.ShowDialog() != true) { return; }
+            this.preferences["partyFile"] = ofd.FileName;
+            this.preferences["partyDir"] = System.IO.Path.GetDirectoryName(ofd.FileName);
+            this.preferences.save();
+            this.doPartyLoad();
+        }
+
+        private void doPartyLoad() {
+            if (!this.preferences.ContainsKey("partyFile")) { return; }
+            DictionaryStore<String, Dictionary<String, int>> partyDict = new DictionaryStore<String, Dictionary<String, int>>(this.preferences["partyFile"]);
+            this.partyList.Items.Clear();
+            foreach (String name in partyDict.Keys) {
+                CharacterRow c = new CharacterRow {
+                    present = (partyDict[name]["present"] != 0),
+                    name = name,
+                    level = partyDict[name]["level"],
+                    totalXp = partyDict[name]["level"] * (partyDict[name]["level"] - 1) * 500 + partyDict[name]["xp"],
+                    unspentXp = partyDict[name]["xp"]
+                };
+                this.partyList.Items.Add(c);
+            }
+            this.partyList.Items.Refresh();
+            this.partyChanged = false;
+        }
+
+        private void saveParty(object sender, RoutedEventArgs e) {
+            if (!this.partyChanged) { return; }
+            if (!this.preferences.ContainsKey("partyFile")) {
+                this.savePartyAs(sender, e);
+                return;
+            }
+            this.doPartySave();
+        }
+
+        private void savePartyAs(object sender, RoutedEventArgs e) {
+            SaveFileDialog sfd = new SaveFileDialog();
+            sfd.DefaultExt = ".xpd";
+            sfd.Filter = "Party Files|*.xpd|All Files|*.*";
+            if (this.preferences.ContainsKey("partyFile")) {
+                sfd.FileName = this.preferences["partyFile"];
+            }
+            if (this.preferences.ContainsKey("partyDir")) {
+                sfd.InitialDirectory = this.preferences["partyDir"];
+            }
+            sfd.ValidateNames = true;
+            if (sfd.ShowDialog() != true) { return; }
+            this.preferences["partyFile"] = sfd.FileName;
+            this.preferences["partyDir"] = System.IO.Path.GetDirectoryName(sfd.FileName);
+            this.preferences.save();
+            this.doPartySave();
+        }
+
+        private void doPartySave() {
+            if (!this.preferences.ContainsKey("partyFile")) { return; }
+            DictionaryStore<String, Dictionary<String, int>> partyDict = new DictionaryStore<String, Dictionary<String, int>>(this.preferences["partyFile"]);
+            foreach (CharacterRow c in this.partyList.Items) {
+                Dictionary<String, int> character = new Dictionary<string, int>();
+                character["present"] = (c.present ? 1 : 0);
+                character["level"] = c.level;
+                character["xp"] = c.unspentXp;
+                partyDict[c.name] = character;
+            }
+            partyDict.save();
+            this.partyChanged = false;
+        }
+
+        private void selectAllParty(object sender, RoutedEventArgs e) {
+            foreach (CharacterRow c in this.partyList.Items) {
+                if (!c.present) { this.partyChanged = true; }
+                c.present = true;
+            }
+            if (this.partyChanged) { this.partyList.Items.Refresh(); }
+        }
+
+        private void deselectAllParty(object sender, RoutedEventArgs e) {
+            foreach (CharacterRow c in this.partyList.Items) {
+                if (c.present) { this.partyChanged = true; }
+                c.present = false;
+            }
+            if (this.partyChanged) { this.partyList.Items.Refresh(); }
+        }
+
+        private void clearParty(object sender, RoutedEventArgs e) {
+            if (this.partyChanged) {
+                if (MessageBox.Show("The current party has unsaved changes. Unload it anyway?", "Discard?", MessageBoxButton.YesNo) != MessageBoxResult.Yes) {
+                    return;
+                }
+            }
+            if (this.preferences.ContainsKey("partyFile")) {
+                this.preferences.Remove("partyFile");
+                this.preferences.save();
+            }
+            this.partyList.Items.Clear();
+            this.partyList.Items.Refresh();
+            this.partyChanged = false;
+        }
 
         private void addCharacter(object sender, RoutedEventArgs e) {
             CharacterWindow cw = new CharacterWindow();

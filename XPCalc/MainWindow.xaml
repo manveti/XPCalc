@@ -85,15 +85,16 @@
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="1*"/>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <Button Grid.Row="0" Grid.Column="1" Content="Load..."/>
-                        <Button Grid.Row="0" Grid.Column="2" Content="Save"/>
-                        <Button Grid.Row="0" Grid.Column="3" Content="Save As..."/>
-                        <ListView Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4" Name="partyList">
+                        <Button Grid.Row="0" Grid.Column="2" Content="Load..." Click="loadParty"/>
+                        <Button Grid.Row="0" Grid.Column="3" Content="Save" Click="saveParty"/>
+                        <Button Grid.Row="0" Grid.Column="4" Content="Save As..." Click="savePartyAs"/>
+                        <ListView Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="5" Name="partyList">
                             <ListView.View>
                                 <GridView>
                                     <GridViewColumn>
@@ -101,8 +102,8 @@
                                             Present
                                             <GridViewColumnHeader.ContextMenu>
                                                 <ContextMenu>
-                                                    <MenuItem Header="Select All"/>
-                                                    <MenuItem Header="Clear All"/>
+                                                    <MenuItem Header="Select All" Click="selectAllParty"/>
+                                                    <MenuItem Header="Unselect All" Click="deselectAllParty"/>
                                                 </ContextMenu>
                                             </GridViewColumnHeader.ContextMenu>
                                         </GridViewColumnHeader>
@@ -119,9 +120,10 @@
                                 </GridView>
                             </ListView.View>
                         </ListView>
-                        <Button Grid.Row="2" Grid.Column="1" Content="Add..." Click="addCharacter"/>
-                        <Button Grid.Row="2" Grid.Column="2" Content="Edit..." Click="editCharacter"/>
-                        <Button Grid.Row="2" Grid.Column="3" Content="Remove" Click="removeCharacter"/>
+                        <Button Grid.Row="2" Grid.Column="0" Content="Clear" Click="clearParty"/>
+                        <Button Grid.Row="2" Grid.Column="2" Content="Add..." Click="addCharacter"/>
+                        <Button Grid.Row="2" Grid.Column="3" Content="Edit..." Click="editCharacter"/>
+                        <Button Grid.Row="2" Grid.Column="4" Content="Remove" Click="removeCharacter"/>
                     </Grid>
                 </GroupBox>
                 <GroupBox Grid.Row="0" Grid.Column="2" Header="XP">
