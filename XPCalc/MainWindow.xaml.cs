@@ -47,6 +47,7 @@ namespace XPCalc {
 
         class XpRow {
             public String character { get; set; }
+            public int level { get; set; }
             public int xp { get; set; }
             public String notes { get; set; }
             public XpError err { get; set; }
@@ -378,13 +379,39 @@ namespace XPCalc {
                     break;
                 case XpError.OverLevel:
                     notes = "*";
-                    errMsg = "XP award for " + c.name + "was more than two levels' worth; truncated to 1XP below second level-up";
+                    errMsg = "XP award for " + c.name + " was more than two levels' worth; truncated to 1XP below second level-up";
                     break;
                 }
-                this.xpList.Items.Add(new XpRow { character = c.name, xp = xp, notes=notes, err=worstErr, errMsg=errMsg });
+                this.xpList.Items.Add(new XpRow { character = c.name, level=c.level, xp = xp, notes=notes, err=worstErr, errMsg=errMsg });
             }
             this.xpList.Items.Refresh();
         }
+
+        private void adjustEncounterXp(object sender, RoutedEventArgs e) {
+            foreach (XpRow r in this.xpList.Items) {
+                if ((this.partyXpBox.Value < 0) && (r.err == XpError.OverLevel)) {
+                    r.err = XpError.Failure;
+                    r.notes = "X";
+                    r.errMsg = "XP award for " + r.character + " had been truncated due to over-leveling; negative adjustment not applied";
+                    continue;
+                }
+                r.xp += (int)this.partyXpBox.Value;
+                if (r.xp >= this.overLevelThreshold(r.level)) {
+                    r.xp = this.overLevelThreshold(r.level) - 1;
+                    if ((r.err != XpError.Failure) && (r.err != XpError.OverLevel)) {
+                        r.err = XpError.OverLevel;
+                        r.notes = "*";
+                        r.errMsg = "XP award for " + r.character + " was more than two levels' worth; truncated to 1XP below second level-up";
+                    }
+                }
+            }
+            this.xpList.Items.Refresh();
+        }
+
+        //clearEncounterXp
+        //editEncounterXp
+        //encounterXpNotes
+        //applyEncounterXp
 
         private int calculateXp(int cr, int level, int count, out XpError err) {
             int origLevel = level;
@@ -410,7 +437,7 @@ namespace XPCalc {
             for (; diff > 1; diff -= 2) {
                 xp *= 2;
             }
-            if ((diff < 0) || ((diff > 0) && (level == 4))) {
+            if ((diff < 0) || ((diff > 0) && ((level == 4) || (level >= 20)))) {
                 xp *= (diff > 0 ? 4 : 2);
                 xp /= 3;
             }

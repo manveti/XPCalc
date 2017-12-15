@@ -144,7 +144,7 @@
                         <Button Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="5" Content="Calculate Encounter XP" Click="calculateEncounterXp"/>
                         <Label Grid.Row="1" Grid.Column="0" Content="Party:"/>
                         <!--SpinBox partyXpBox created in code-->
-                        <Button Grid.Row="1" Grid.Column="4" Content="Adjust"/>
+                        <Button Grid.Row="1" Grid.Column="4" Content="Adjust" Click="adjustEncounterXp"/>
                         <ListView Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="5" Name="xpList">
                             <ListView.View>
                                 <GridView>
