@@ -521,6 +521,8 @@ namespace XPCalc {
                 MessageBox.Show("Unable to find the following characters to apply XP: " + String.Join(", ", missing), "Error");
             }
             if (this.partyChanged) { this.partyList.Items.Refresh(); }
+            this.xpList.Items.Clear();
+            this.xpList.Items.Refresh();
         }
 
         private int calculateXp(int cr, int level, int count, out XpError err) {

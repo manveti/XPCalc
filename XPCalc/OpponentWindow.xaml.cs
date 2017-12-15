@@ -46,7 +46,7 @@ namespace XPCalc {
         }
 
         public void nameChanged(object sender, SelectionChangedEventArgs e) {
-            if (!this.opponents.ContainsKey((String)nameBox.SelectedItem)) { return; }
+            if ((nameBox.SelectedItem == null) || (!this.opponents.ContainsKey((String)nameBox.SelectedItem))) { return; }
             this.crBox.Value = this.opponents[(String)nameBox.SelectedItem];
         }
 
