@@ -48,6 +48,7 @@ namespace XPCalc {
         class XpRow {
             public String character { get; set; }
             public int level { get; set; }
+            public int unspentXp { get; set; }
             public int xp { get; set; }
             public String notes { get; set; }
             public XpError err { get; set; }
@@ -159,6 +160,7 @@ namespace XPCalc {
 
         private void editOpponent(object sender, RoutedEventArgs e) {
             OpponentRow selected = (OpponentRow)this.opponentList.SelectedItem;
+            if (selected == null) { return; }
             OpponentWindow ow = new OpponentWindow(this.opponents);
             ow.setExisting(selected.name, selected.cr, selected.count);
             ow.ShowDialog();
@@ -292,22 +294,35 @@ namespace XPCalc {
         }
 
         private void addCharacter(object sender, RoutedEventArgs e) {
-            CharacterWindow cw = new CharacterWindow();
+            String defaultName = this.getDefaultCharacterName();
+            CharacterWindow cw = new CharacterWindow(defaultName);
             cw.ShowDialog();
             if (!cw.isValid()) { return; }
+            String name = cw.name;
+            if (this.nameInUse(cw.name)) {
+                name = this.getDefaultCharacterName();
+                MessageBox.Show("The name '" + cw.name + "' is already in use; name changed to " + name);
+            }
             this.partyChanged = true;
-            this.partyList.Items.Add(new CharacterRow { present = true, name = cw.name, level = cw.level, totalXp = cw.totalXp, unspentXp = cw.unspentXp });
+            this.partyList.Items.Add(new CharacterRow { present = true, name = name, level = cw.level, totalXp = cw.totalXp, unspentXp = cw.unspentXp });
             this.partyList.Items.Refresh();
         }
 
         private void editCharacter(object sender, RoutedEventArgs e) {
             CharacterRow selected = (CharacterRow)this.partyList.SelectedItem;
-            CharacterWindow cw = new CharacterWindow();
+            if (selected == null) { return; }
+            String defaultName = this.getDefaultCharacterName();
+            CharacterWindow cw = new CharacterWindow(defaultName);
             cw.setExisting(selected.name, selected.level, selected.unspentXp);
             cw.ShowDialog();
             if (!cw.isValid()) { return; }
+            String name = cw.name;
+            if (this.nameInUse(cw.name)) {
+                name = selected.name;
+                MessageBox.Show("The name '" + cw.name + "' is already in use; name reverted to " + name);
+            }
             this.partyChanged = true;
-            selected.name = cw.name;
+            selected.name = name;
             selected.level = cw.level;
             selected.totalXp = cw.totalXp;
             selected.unspentXp = cw.unspentXp;
@@ -381,8 +396,14 @@ namespace XPCalc {
                     notes = "*";
                     errMsg = "XP award for " + c.name + " was more than two levels' worth; truncated to 1XP below second level-up";
                     break;
+                case XpError.Success:
+                    if (xp + c.unspentXp >= c.level * 1000) {
+                        notes = "L";
+                        errMsg = "XP award for " + c.name + " is sufficient to gain a level";
+                    }
+                    break;
                 }
-                this.xpList.Items.Add(new XpRow { character = c.name, level=c.level, xp = xp, notes=notes, err=worstErr, errMsg=errMsg });
+                this.xpList.Items.Add(new XpRow { character = c.name, level = c.level, unspentXp = c.unspentXp, xp = xp, notes = notes, err = worstErr, errMsg = errMsg });
             }
             this.xpList.Items.Refresh();
         }
@@ -404,14 +425,103 @@ namespace XPCalc {
                         r.errMsg = "XP award for " + r.character + " was more than two levels' worth; truncated to 1XP below second level-up";
                     }
                 }
+                else if (r.xp + r.unspentXp >= r.level * 1000) {
+                    r.notes = "L";
+                    r.errMsg = "XP award for " + r.character + " is sufficient to gain a level";
+                }
+                else if (r.xp + r.unspentXp < 0) {
+                    r.notes = "D";
+                    r.errMsg = "XP loss for " + r.character + " is sufficient to lose a level";
+                }
+                else if ((r.notes == "L") || (r.notes == "D")) {
+                    r.notes = "";
+                    r.errMsg = "";
+                }
             }
+            if (this.xpList.Items.Count <= 0) {
+                // special case for generating XP without a combat encounter
+                foreach (CharacterRow c in this.partyList.Items) {
+                    if (!c.present) { continue; }
+                    XpRow r = new XpRow {
+                        character = c.name,
+                        level = c.level,
+                        unspentXp = c.unspentXp,
+                        xp = (int)this.partyXpBox.Value,
+                        notes = "",
+                        err = XpError.Success,
+                        errMsg = ""
+                    };
+                    if (r.xp >= this.overLevelThreshold(r.level)) {
+                        r.xp = this.overLevelThreshold(r.level) - 1;
+                        r.err = XpError.OverLevel;
+                        r.notes = "*";
+                        r.errMsg = "XP award for " + r.character + " was more than two levels' worth; truncated to 1XP below second level-up";
+                    }
+                    else if (r.xp + c.unspentXp >= c.level * 1000) {
+                        r.notes = "L";
+                        r.errMsg = "XP award for " + c.name + " is sufficient to gain a level";
+                    }
+                    else if (r.xp + c.unspentXp < 0) {
+                        r.notes = "D";
+                        r.errMsg = "XP award for " + c.name + " is sufficient to lose a level";
+                    }
+                    else if ((r.notes == "L") || (r.notes == "D")) {
+                        r.notes = "";
+                        r.errMsg = "";
+                    }
+                    this.xpList.Items.Add(r);
+                }
+            }
+            this.partyXpBox.Value = 0;
             this.xpList.Items.Refresh();
         }
 
-        //clearEncounterXp
-        //editEncounterXp
-        //encounterXpNotes
-        //applyEncounterXp
+        private void clearEncounterXp(object sender, RoutedEventArgs e) {
+            this.xpList.Items.Clear();
+            this.xpList.Items.Refresh();
+        }
+
+        private void editEncounterXp(object sender, RoutedEventArgs e) {
+            //edit selected row of this.xpList
+        }
+
+        private void encounterXpNotes(object sender, RoutedEventArgs e) {
+            XpRow selected = (XpRow)this.xpList.SelectedItem;
+            if ((selected == null) || (selected.errMsg.Length <= 0)) { return; }
+            String severity = "Notice";
+            switch (selected.err) {
+            case XpError.Failure: severity = "Error"; break;
+            case XpError.ELTooHigh: severity = "Warning"; break;
+            }
+            MessageBox.Show(selected.errMsg, severity);
+        }
+
+        private void applyEncounterXp(object sender, RoutedEventArgs e) {
+            List<String> missing = new List<string>();
+            foreach (XpRow r in this.xpList.Items) {
+                bool handled = false;
+                foreach (CharacterRow c in this.partyList.Items) {
+                    if (c.name != r.character) { continue; }
+                    this.partyChanged = true;
+                    handled = true;
+                    c.totalXp += r.xp;
+                    if (c.totalXp < 0) { c.totalXp = 0; }
+                    c.unspentXp = c.totalXp;
+                    c.level = 1;
+                    while (c.unspentXp >= c.level * 1000) {
+                        c.unspentXp -= c.level * 1000;
+                        c.level += 1;
+                    }
+                }
+                if (!handled) {
+                    missing.Add(r.character);
+                }
+            }
+            if (missing.Count > 0) {
+                MessageBox.Show("Unable to find the following characters to apply XP: " + String.Join(", ", missing), "Error");
+            }
+            if (this.partyChanged) { this.partyList.Items.Refresh(); }
+        }
 
         private int calculateXp(int cr, int level, int count, out XpError err) {
             int origLevel = level;
@@ -455,6 +565,21 @@ namespace XPCalc {
 
         private int overLevelThreshold(int level) {
             return (level + level + 1) * 1000;
+        }
+
+        private bool nameInUse(String name) {
+            foreach (CharacterRow c in this.partyList.Items) {
+                if (c.name == name) { return true; }
+            }
+            return false;
+        }
+
+        private String getDefaultCharacterName() {
+            String name = "Character";
+            for (int i = 2; this.nameInUse(name); i++) {
+                name = "Character " + i;
+            }
+            return name;
         }
     }
 }

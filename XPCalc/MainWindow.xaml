@@ -115,7 +115,7 @@
                                     </GridViewColumn>
                                     <GridViewColumn Header="Character" DisplayMemberBinding="{Binding name}"/>
                                     <GridViewColumn Header="Level" DisplayMemberBinding="{Binding level}"/>
-                                    <GridViewColumn Header="XP" DisplayMemberBinding="{Binding totalXp}"/>
+                                    <GridViewColumn Header="XP" Width="55" DisplayMemberBinding="{Binding totalXp}"/>
                                     <GridViewColumn Header="Unspent" DisplayMemberBinding="{Binding unspentXp}"/>
                                 </GridView>
                             </ListView.View>
@@ -149,15 +149,15 @@
                             <ListView.View>
                                 <GridView>
                                     <GridViewColumn Header="Character" DisplayMemberBinding="{Binding character}"/>
-                                    <GridViewColumn Header="XP" DisplayMemberBinding="{Binding xp}"/>
+                                    <GridViewColumn Header="XP" Width="43" DisplayMemberBinding="{Binding xp}"/>
                                         <GridViewColumn Header="Notes" DisplayMemberBinding="{Binding notes}"/>
                                 </GridView>
                             </ListView.View>
                         </ListView>
-                        <Button Grid.Row="3" Grid.Column="0" Content="Clear"/>
-                        <Button Grid.Row="3" Grid.Column="2" Content="Edit..."/>
-                        <Button Grid.Row="3" Grid.Column="3" Content="Notes"/>
-                        <Button Grid.Row="3" Grid.Column="4" Content="Apply XP"/>
+                        <Button Grid.Row="3" Grid.Column="0" Content="Clear" Click="clearEncounterXp"/>
+                        <Button Grid.Row="3" Grid.Column="2" Content="Edit..." Click="editEncounterXp"/>
+                        <Button Grid.Row="3" Grid.Column="3" Content="Notes" Click="encounterXpNotes"/>
+                        <Button Grid.Row="3" Grid.Column="4" Content="Apply XP" Click="applyEncounterXp"/>
                     </Grid>
                 </GroupBox>
             </Grid>

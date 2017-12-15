@@ -22,9 +22,11 @@ namespace XPCalc {
         private SpinBox levelBox, totalXpBox, unspentXpBox;
 
         private bool valid = false;
+        private String defaultName;
 
-        public CharacterWindow() {
+        public CharacterWindow(String defaultName) {
             InitializeComponent();
+            this.defaultName = defaultName;
             this.levelBox = new SpinBox();
             this.levelBox.Value = 1;
             this.levelBox.Minimum = 1;
@@ -67,7 +69,7 @@ namespace XPCalc {
 
         public void doOk(object sender, RoutedEventArgs e) {
             if (nameBox.Text.Length <= 0) {
-                nameBox.Text = "Character";
+                nameBox.Text = defaultName;
             }
             this.valid = true;
             this.Close();
