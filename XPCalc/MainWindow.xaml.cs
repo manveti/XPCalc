@@ -130,7 +130,7 @@ namespace XPCalc {
             this.simpleNotesBut.IsEnabled = (this.simpleErr != XpError.Success);
         }
 
-        private void getSimpleNotes(object sender, RoutedEventArgs e) {
+        private void simpleNotes(object sender, RoutedEventArgs e) {
             String err = "An error occurred", severity = "Error";
             switch (this.simpleErr) {
             case XpError.ELTooLow:
